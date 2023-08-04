@@ -1,10 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def ricker_wavelet(t, f0, t0):
-    arg = (np.pi * f0 * (t - t0)) ** 2
-    return (1 - 2 * arg) * np.exp(-arg)
-
 def fdgaus(w, cutoff, dt, nt):
     phi = 4 * np.arctan(1.0)
     a = phi * (5.0 * cutoff / 8.0) ** 2
@@ -38,7 +34,7 @@ def main():
     xmax = 1.0
     dx = 0.005
     nx = int(xmax / dx)
-    vmax = 2.0
+    vmax = 1.2
     tmax = 1.0
     dt = 0.001
     nt = int(tmax / dt)
@@ -53,6 +49,8 @@ def main():
     f[nx // 2] = 1.0
 
     fdgaus(w, fmax, dt, nt)
+    plt.plot(w)
+    plt.show()
 
     seismogram = np.zeros((nt, nx))  # 2차원 배열로 seismogram 저장
 
@@ -64,17 +62,17 @@ def main():
             u1[ix] = u2[ix]
             u2[ix] = u3[ix]
             #단방향으로 푼 파동방정식 값을 대입해줘서 양 옆을 없앤다!
-        #u2[0] = vmax * dt / dx * (u1[1] - u1[0]) + u1[0]
-        #u2[nx-1] = vmax * dt / dx * (u1[nx - 2] - u1[nx-1]) + u1[nx-1]
+        u2[0] = vmax * dt / dx * (u1[1] - u1[0]) + u1[0]
+        u2[nx-1] = vmax * dt / dx * (u1[nx - 2] - u1[nx-1]) + u1[nx-1]
 
         seismogram[it, :] = u3  # 지진 센서 위치에 해당하는 데이터를 seismogram에 저장
 
     # Seismogram을 2차원 그래프로 시각화합니다.
-    plt.imshow(seismogram, aspect='auto', extent=[0, xmax, tmax, 0], cmap='viridis')
+    plt.imshow(seismogram, aspect='auto', extent=[0, xmax, tmax, 0], cmap='binary')
     plt.colorbar(label="Amplitude")
     plt.xlabel("X")
     plt.ylabel("Time (s)")
-    plt.title("Seismogram")
+    plt.title("1D Wave Equation FDM Modeling in T-S")
     plt.show()
 
 if __name__ == "__main__":

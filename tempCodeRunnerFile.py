@@ -1,5 +1,0 @@
-plt.imshow(U[:,:, 1], aspect='auto', extent=[0, xmax, tmax, 0], cmap='seismic')
-    plt.colorbar()
-    plt.xlabel('X')
-    plt.ylabel('Time(s)')
-    plt.show() 
