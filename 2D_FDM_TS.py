@@ -104,7 +104,7 @@ def main():
     plt.xlabel('x_dist')
     plt.ylabel('time')
     plt.title("2D Wave Equation FDM Modeling in T-S")
-    plt.imshow(result.squeeze(), cmap='binary', aspect='auto', vmin=-boundary, vmax=boundary)
+    plt.imshow(result.squeeze(), cmap='binary', aspect='auto', vmin= -boundary, vmax=boundary)
     plt.show()
 
     print(f"boundary condition : {-boundary, boundary}")

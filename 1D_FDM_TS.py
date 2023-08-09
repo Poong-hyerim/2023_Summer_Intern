@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Gaussian의 1차 미분형을 wavelet으로 사용하기 위한 사용자 정의 함수
 def fdgaus(w, cutoff, dt, nt):
     phi = 4 * np.arctan(1.0)
     a = phi * (5.0 * cutoff / 8.0) ** 2
@@ -31,6 +32,7 @@ def fdgaus(w, cutoff, dt, nt):
         w[i] = w[i] / smax
 
 def main():
+    #변수 선언
     xmax = 1.0
     dx = 0.005
     nx = int(xmax / dx)
@@ -39,21 +41,22 @@ def main():
     dt = 0.001
     nt = int(tmax / dt)
     fmax = 25.0
-
+    #배열 선언
     u1 = np.zeros(nx)
     u2 = np.zeros(nx)
     u3 = np.zeros(nx)
     f = np.zeros(nx)
     w = np.zeros(nt)
-
+    #nx 중간 지점에만 source를 1로 설정(중앙부에서 source 발파의미)
     f[nx // 2] = 1.0
-
+    #wavelet 생성
     fdgaus(w, fmax, dt, nt)
+    #커브 모양 확인
     plt.plot(w)
     plt.show()
-
-    seismogram = np.zeros((nt, nx))  # 2차원 배열로 seismogram 저장
-
+    #seismogram 추출을 위한 배열 추가 선언
+    seismogram = np.zeros((nt, nx))
+    #u3 계산을 위한 반복문
     for it in range(nt):
         for ix in range(1, nx - 1):
             u3[ix] = (vmax ** 2) * (dt ** 2) * (
@@ -61,13 +64,9 @@ def main():
         for ix in range(nx):
             u1[ix] = u2[ix]
             u2[ix] = u3[ix]
-            #단방향으로 푼 파동방정식 값을 대입해줘서 양 옆을 없앤다!
-        u2[0] = vmax * dt / dx * (u1[1] - u1[0]) + u1[0]
-        u2[nx-1] = vmax * dt / dx * (u1[nx - 2] - u1[nx-1]) + u1[nx-1]
-
-        seismogram[it, :] = u3  # 지진 센서 위치에 해당하는 데이터를 seismogram에 저장
-
-    # Seismogram을 2차원 그래프로 시각화합니다.
+        #매 it에 대한 u3계산 값을 seismogram에 저장
+        seismogram[it, :] = u3
+    # Seismogram 시각화
     plt.imshow(seismogram, aspect='auto', extent=[0, xmax, tmax, 0], cmap='binary')
     plt.colorbar(label="Amplitude")
     plt.xlabel("X")
