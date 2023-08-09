@@ -1,28 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def CSY(il, iu, bb, dd, aa, cc):
-    # Tridiagonal equation solver following Thomas algorithm - COMPLX version
-    # il: Subscript of first equation
-    # iu: Subscript of last equation
-    # bb: Coefficients to the left of the main diagonal
-    # dd: Coefficients on the main diagonal
-    # aa: Coefficients to the right of the main diagonal
-    # cc: Elements of the constant vector
-    
-    # Establishing upper triangular matrix
-    lp = il + 1
-    for i in range(lp, iu + 1):
-        r = bb[i] / dd[i - 1]
-        dd[i] -= r * aa[i - 1]
-        cc[i] -= r * cc[i - 1]
-    
-    # Back substitution
-    cc[iu] /= dd[iu]
-    for i in range(lp, iu + 1):
-        j = iu - i + il
-        cc[j] = (cc[j] - aa[j] * cc[j + 1]) / dd[j]
-
 def fdgaus(cutoff, dt, nt):
     w = np.zeros(nt)
     phi = 4 * np.arctan(1.0)
@@ -55,8 +33,8 @@ def fdgaus(cutoff, dt, nt):
     for i in range(nt):
         w[i] = w[i] / smax
 
-    plt.plot(w)
-    plt.show()
+    # plt.plot(w)
+    # plt.show()
     return w
 
 ###[---주파수 영역의 1D 모델링 가즈아!---]###
@@ -73,23 +51,24 @@ dx = 0.01
 v = 2
 fmax = 20
 tmax = 2
+
 dt = (0.5/fmax)
-ndt = (0.1/fmax)
+nt = int(tmax/dt)
 df = 1/tmax
-nnt = int(tmax/ndt)+1
+nf = int(fmax/df)
+
+ndt = (0.1/fmax)
+nnt = int(tmax/ndt)
 alpha = np.log(100)/tmax
-nt = int(tmax/dt)+1
-nf = int(fmax/df)+1
 
 source = np.zeros(nt, dtype=complex)
-matl = np.zeros(nx, dtype=complex)
-matd = np.zeros(nx, dtype=complex)
-matr = np.zeros(nx, dtype=complex)
+mat = np.zeros((nx,nx), dtype=complex)
 csource = np.zeros(nt, dtype=complex)
-u = np.zeros(nnt, dtype=complex)
+u = np.zeros((nx,nt), dtype=complex)
 f = np.zeros(nx, dtype=complex)
 green = np.zeros((nx,nf), dtype=complex)
 
+print(f"nnt:{nnt}, nt:{nt}, nf:{nf}")
 #source를 선언하고 복소수 형태로 바꿔준 후 푸리에 변환
 #t domain의 소스를 생성!
 source = fdgaus(fmax, dt, nt)
@@ -99,60 +78,70 @@ for it in range(1, nt+1):
 
 #csource를 주파수 영역의 소스로 바꿔준다!
 csource = np.fft.fft(csource)
-#그린 함수 초기화
-green [:,:] = 0.0
 
 #얻어진 식은 행렬 matrix연산을 통해서 u에 대한 값계산이 가능하다.
 #[계수 행렬]*[u] = [f]이므로 우리는 [u] = [계수행렬-1(역행렬)]*[f]를 진행할 예정
     #1. 계수 행렬을 계산하고 역행렬 취하기 tridiagonal matrix > CSY subroutine(파이썬에서 방법으로 변경)
     #2. f항에 wavelet 설정하기
     #3. 1에서 구한 역행렬*f를 곱해서 u에 대한 식 풀이하기
-    
+temp = []
 #주파수에따라 이를 반복적으로 계산(주파수를 변화시키며 tridiagonal matrix 생성 후 풀이)
 #w는 1~df 범위내에서 df 간격으로 변화 시키는 중
-for ifreq in range(2, nf+1):
+
+for ifreq in range(1, nf):
     #w를 변화시키면서
     print(ifreq)
-    w = 2.0 * pi * (ifreq-1) * df + 1j * alpha
+    w = 2.0 * pi * (ifreq) * df - 1j * alpha
     #매번 f는 초기화 후 중앙 부분에서 발파하는 것으로 설정
     f[:] = 0.0
     f[nx//2] = 1.0
     #행렬 구성하기
-    matl[:] = -(1.0/dx**2)
-    matd[:] = -(w**2/v**2)+(2/dx**2)
-    matr[:] = -(1.0/dx**2)
-    matd[0] = 0.0 - 1j * w / v + 1.0 / dx
-    matr[0] = -1.0 / dx
-    matl[nx-1] = -1.0 / dx
-    matd[nx-1] = 0.0 - 1j * w / v + 1.0 / dx
+    mat[:] = 0.0
+    mat[0, 0] = -(w ** 2 / v ** 2) + (2 / dx ** 2)
+    mat[0, 1] = -1.0 / dx**2
+    mat[nx - 1, nx - 1] = -(w ** 2 / v ** 2) + (2 / dx ** 2)
+    mat[nx - 1, nx - 2] = -1.0 / dx**2
+    
+    for i in range(1, nx - 1):
+        mat[i, i] = -(w ** 2 / v ** 2) + (2 / dx ** 2)
+        mat[i, i - 1] = -(1.0 / dx ** 2)
+        mat[i, i + 1] = -(1.0 / dx ** 2)
+
+    #mat*u = f에서 u를 구해줌!
+    f = np.linalg.solve(mat, f)
     #설정한 f(중앙발파)와 행렬(tridiagonal matrix)를 대입!
-    CSY(0, nx-1, matl, matd, matr, f)
+
+    temp.append(f)
+    
+    green[:, ifreq] = f[:]   
+    
     #green func로 주파수마다 내역을 저장해주기
-    for ix in range (1, nx+1):
-        green[ix-1, ifreq-1] = f[ix-1]
 
 #fdgaus 파형*green 배열로 fdgaus source 설정
-for ix in range(1, nx+1):
-    u[:] = 0.0
+u[:,:] = 0
+for ix in range( nx):
+    #파형적용
+    for ifreq in range(nf):
+        u[ix, ifreq] = green[ix, ifreq] * csource[ifreq]
+    #conjugate로 반쪽 만들어주깅!
+    for ifreq in range(1,nf):
+        u[ix, (nt-1)-ifreq+1] = np.conj(u[ix, ifreq])
 
-    for ifreq in range(2,nf+1):
-        u[ifreq-1] = green[ix-1, ifreq-1] * csource[ifreq-1]
+    # ----- 여기서 부터는 시간영역으로 작업..! -----
 
-    for ifreq in range(2, nf+1):
-        u[nnt-ifreq+1] = np.conj(u[ifreq-1])
-
-    for it in range(1, nnt+1):
-        u[it-1] = np.conj(u[it-1])
 
     # inverse fourier를 통해서 다시 time domain으로 돌아간 후 u를 seismogram으로 뽑아보기
     # *** inverse 후에 u결과를 nt로 나눠주어야 처음과 진폭을 동일하게 맞출 수 있다(왜!?)
     #u = np.fft.fft(u)
 u = np.fft.ifft(u) / nt
-print(f"this is u : {u.shape}")
+for it in range (0, nt):
+  u[:,it]=u[:,it]*np.exp(alpha*it*dt)
+      
 
+print(u.shape)
 plt.xlabel('x_dist')
 plt.ylabel('time')
 plt.title("1D Wave Equation FDM Modeling in F-S")
-plt.imshow(np.real(u).reshape(1, -1), cmap='binary', aspect='auto', extent=[0, nx, 0, tmax])
+plt.imshow(np.real(u), cmap='binary', aspect='auto', extent=[0, nx, 0, tmax])
 plt.colorbar()  # Optionally, add a color bar for reference 
 plt.show()

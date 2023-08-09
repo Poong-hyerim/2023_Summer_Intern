@@ -73,8 +73,8 @@ print(f"nnt:{nnt}, nt:{nt}, nf:{nf}")
 #t domain의 소스를 생성!
 source = fdgaus(fmax, dt, nt)
 #복소수로 source를 변환해준다
-for it in range(1, nt+1):
-    csource[it-1] = source[it-1]*np.exp(-alpha*it*dt) 
+for it in range(0, nt):
+    csource[it] = source[it]*np.exp(-alpha*it*dt) 
 
 #csource를 주파수 영역의 소스로 바꿔준다!
 csource = np.fft.fft(csource)
@@ -90,16 +90,16 @@ temp = []
 for ifreq in range(1, nf):
     #w를 변화시키면서
     print(ifreq)
-    w = 2.0 * pi * (ifreq-1) * df + 1j * alpha
+    w = 2.0 * pi * (ifreq) * df + 1j * alpha
     #매번 f는 초기화 후 중앙 부분에서 발파하는 것으로 설정
     f[:] = 0.0
     f[nx//2] = 1.0
     #행렬 구성하기
     mat[:] = 0.0
-    mat[0, 0] = 0.0 - 1j * w / v + 1.0 / dx
-    mat[0, 1] = -1.0 / dx
-    mat[nx - 1, nx - 1] = 0.0 - 1j * w / v + 1.0 / dx
-    mat[nx - 1, nx - 2] = -1.0 / dx
+    mat[0, 0] = -(w ** 2 / v ** 2) + (2 / dx ** 2)
+    mat[0, 1] = -(1.0 / dx ** 2)
+    mat[nx - 1, nx - 1] = -(w ** 2 / v ** 2) + (2 / dx ** 2)
+    mat[nx - 1, nx - 2] = -(1.0 / dx ** 2)
     
     for i in range(1, nx - 1):
         mat[i, i] = -(w ** 2 / v ** 2) + (2 / dx ** 2)
@@ -108,31 +108,26 @@ for ifreq in range(1, nf):
 
     #mat*u = f에서 u를 구해줌!
     f = np.linalg.solve(mat, f)
-    #설정한 f(중앙발파)와 행렬(tridiagonal matrix)를 대입!
-
-    temp.append(f)
-    
-    green[:, ifreq-1] = f[:]    
+    #설정한 f(중앙발파)와 행렬(tridiagonal matrix)를 대입!    
+    green[:, ifreq] = f[:]    
     #green func로 주파수마다 내역을 저장해주기
-
+u[:,:] = 0
 #fdgaus 파형*green 배열로 fdgaus source 설정
-for ix in range(1, nx):
-    u[:] = 0.0
+for ix in range(nx):
     #파형적용
-    for ifreq in range(1,nf):
-        u[ix-1, ifreq-1] = green[ix-1, ifreq-1] * csource[ifreq-1]
+    for ifreq in range(nf):
+        u[ix, ifreq] = green[ix, ifreq] * csource[ifreq]
     #conjugate로 반쪽 만들어주깅!
     for ifreq in range(1, nf):
-        u[ix-1, (nt-1)-ifreq+1] = np.conj(u[ix-1, ifreq-1])
+        u[ix, (nt-1)-ifreq+1] = np.conj(u[ix, ifreq])
 
-    # ----- 여기서 부터는 시간영역으로 작업..! -----
-    for it in range(1, nt+1):
-        u[ix-1, it-1] = np.conj(u[ix-1, it-1])
-    
     # inverse fourier를 통해서 다시 time domain으로 돌아간 후 u를 seismogram으로 뽑아보기
     # *** inverse 후에 u결과를 nt로 나눠주어야 처음과 진폭을 동일하게 맞출 수 있다(왜!?)
     #u = np.fft.fft(u)
 u = np.fft.ifft(u) / nt
+for it in range(nt):
+    u[:,it] = u[:,it]*np.exp(alpha*it*dt)
+
 print(u.shape)
 plt.xlabel('x_dist')
 plt.ylabel('time')
