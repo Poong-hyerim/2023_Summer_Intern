@@ -135,7 +135,7 @@ for ix in range( nx):
     #u = np.fft.fft(u)
 u = np.fft.ifft(u) / nt
 for it in range (0, nt):
-  u[:,it]=u[:,it]*np.exp(alpha*it*dt)
+    u[:,it]=u[:,it]*np.exp(alpha*it*dt)
       
 
 print(u.shape)
