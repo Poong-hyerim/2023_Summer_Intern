@@ -69,12 +69,12 @@ nu = np.zeros((nx,nnt), dtype=complex)
 f = np.zeros(nx, dtype=complex)
 green = np.zeros((nx,nf), dtype=complex)
 
-#source를 선언하고 복소수 형태로 바꿔준 후 푸리에 변환
+#source를 선언하고 복소수 형태로 바꿔준 후 푸리에
 #t domain의 소스를 생성!
 source = fdgaus(fmax, dt, nt)
 #복소수로 source를 변환해준다
 for it in range(nt):
-    csource[it] = source[it]*np.exp(-alpha*it*dt) 
+    csource[it] = source[it]#*np.exp(-alpha*it*dt) 
 
 #csource를 주파수 영역의 소스로 바꿔준다!
 csource = np.fft.fft(csource)
@@ -90,7 +90,7 @@ csource = np.fft.fft(csource)
 for ifreq in range(1, nf):
     #w를 변화시키면서
     print(ifreq)
-    w = 2.0 * pi * (ifreq) * df + 1j * alpha
+    w = 2.0 * pi * (ifreq) * df - 1j * alpha
     #매번 f는 초기화 후 중앙 부분에서 발파하는 것으로 설정
     f[:] = 0.0
     f[nx//2] = 1.0
@@ -121,15 +121,15 @@ for ix in range(nx):
         nu[ix, ifreq] = green[ix, ifreq] * csource[ifreq]
     #conjugate로 반쪽 만들어주깅!
     for ifreq in range(1,nf):
-        nu[ix, (nt-1)-ifreq+1] = np.conj(nu[ix, ifreq])
+        nu[ix, (nnt-1)-ifreq+1] = np.conj(nu[ix, ifreq])
         
     # inverse fourier를 통해서 다시 time domain으로 돌아간 후 u를 seismogram으로 뽑아보기
     # *** inverse 후에 u결과를 nt로 나눠주어야 처음과 진폭을 동일하게 맞출 수 있다(왜!?)
     #u = np.fft.fft(u)
-nu = np.fft.ifft(nu) / nt
+nu = np.fft.ifft(nu) / nnt
 
-for it in range (nt):
-    nu[:,it]=nu[:,it]*np.exp(-alpha*it*dt)
+for it in range (nnt):
+    nu[:,it]=nu[:,it]*np.exp(alpha*it*ndt)
 
 plt.xlabel('x_dist')
 plt.ylabel('time')

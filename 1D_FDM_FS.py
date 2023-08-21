@@ -64,7 +64,7 @@ alpha = np.log(100)/tmax
 source = np.zeros(nt, dtype=complex)
 mat = np.zeros((nx,nx), dtype=complex)
 csource = np.zeros(nt, dtype=complex)
-u = np.zeros((nx,nt), dtype=complex)
+u = np.zeros((nx, nnt), dtype=complex)
 f = np.zeros(nx, dtype=complex)
 green = np.zeros((nx,nf), dtype=complex)
 
@@ -73,7 +73,7 @@ green = np.zeros((nx,nf), dtype=complex)
 source = fdgaus(fmax, dt, nt)
 #복소수로 source를 변환해준다
 for it in range(0, nt):
-    csource[it] = source[it]*np.exp(-alpha*it*dt) 
+    csource[it] = source[it]#*np.exp(-alpha*it*dt) 
 
 #csource를 주파수 영역의 소스로 바꿔준다!
 csource = np.fft.fft(csource)
@@ -115,21 +115,21 @@ for ifreq in range(1, nf):
     #green func로 주파수마다 내역을 저장해주기
 
 #fdgaus 파형*green 배열로 fdgaus source 설정
-for ix in range( nx):
+for ix in range(nx):
     #파형적용
     for ifreq in range(nf):
         u[ix, ifreq] = green[ix, ifreq] * csource[ifreq]
     #conjugate로 반쪽 만들어주깅!
     for ifreq in range(1,nf):
-        u[ix, (nt-1)-ifreq+1] = np.conj(u[ix, ifreq])
+        u[ix, (nnt-1)-ifreq+1] = np.conj(u[ix, ifreq])
 
 # 역푸리에 후에 nt로 나눠주어야 진폭이 동일해짐..!
 # attenuation으로 WRAPPING AROUND를 방지하고자 시간영역진폭 복원을 추가로 해줌
-u = np.fft.ifft(u) / nt
+u = np.fft.ifft(u) / nnt
 
-for it in range (0, nt):
-    u[:,it]=u[:,it]*np.exp(alpha*it*dt)
-
+for it in range (0, nnt):
+    u[:,it]=u[:,it]*np.exp(alpha*it*ndt)
+print(f"u value : ${u}, u_shape :${u.shape}")
 plt.xlabel('x_dist')
 plt.ylabel('time')
 plt.title("1D Wave Equation FDM Modeling in F-S")
