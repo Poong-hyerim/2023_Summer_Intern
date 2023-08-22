@@ -70,11 +70,11 @@ green = np.zeros((nx,nf), dtype=complex)
 
 #source를 선언하고 복소수 형태로 바꿔준 후 푸리에 변환
 #t domain의 소스를 생성!
-source = fdgaus(fmax, dt, nt)
+csource = fdgaus(fmax, dt, nt)
 #복소수로 source를 변환해준다
-for it in range(0, nt):
-    csource[it] = source[it]#*np.exp(-alpha*it*dt) 
-
+'''for it in range(0, nt):
+    csource[it] = source[it]*np.exp(-alpha*it*dt) 
+'''
 #csource를 주파수 영역의 소스로 바꿔준다!
 csource = np.fft.fft(csource)
 
@@ -129,7 +129,7 @@ u = np.fft.ifft(u) / nnt
 
 for it in range (0, nnt):
     u[:,it]=u[:,it]*np.exp(alpha*it*ndt)
-print(f"u value : ${u}, u_shape :${u.shape}")
+    
 plt.xlabel('x_dist')
 plt.ylabel('time')
 plt.title("1D Wave Equation FDM Modeling in F-S")
