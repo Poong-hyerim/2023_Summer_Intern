@@ -130,8 +130,8 @@ u = np.fft.ifft(u) / nnt
 for it in range (0, nnt):
     u[:,it]=u[:,it]*np.exp(alpha*it*ndt)
     
-plt.xlabel('x_dist')
-plt.ylabel('time')
+plt.ylabel('x_dist')
+plt.xlabel('time')
 plt.title("1D Wave Equation FDM Modeling in F-S")
 plt.imshow(np.real(u), cmap='binary', aspect='auto', extent=[0, nx, 0, tmax])
 plt.colorbar()  # Optionally, add a color bar for reference 
