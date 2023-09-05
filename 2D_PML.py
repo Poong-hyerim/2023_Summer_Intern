@@ -67,11 +67,11 @@ alpha = np.log(100)/tmax
 source = np.zeros(nt)
 u = np.zeros((nnx, nt), dtype=complex)
 uz = np.zeros((nnz, nt), dtype=complex)
-temp = np.zeros(nnx*nnz, dtype=complex)
+#temp = np.zeros(nnx*nnz, dtype=complex)
 cf = np.zeros(nnx*nnz, dtype=complex)
 mat = np.zeros((nnx*nnz, nnx*nnz), dtype=complex)
 green = np.zeros((nnx, nf), dtype=complex)
-greenz = np.zeros((nnz, nf), dtype=complex)
+#greenz = np.zeros((nnz, nf), dtype=complex)
 
 source = fdgaus(fmax, dt, nt)
 source = np.fft.fft(source)
@@ -113,33 +113,33 @@ for ifreq in range(1,nf):
     temp=np.linalg.solve(mat, cf)
     for ix in range(nnx):
         green[ix, ifreq] = np.copy(temp[ix*nnz+2])
-    for iz in range(nnz):
-        greenz[iz, ifreq] = np.copy(temp[nnx//2*nnz+iz])
+    # for iz in range(nnz):
+    #     greenz[iz, ifreq] = np.copy(temp[nnx//2*nnz+iz])
 
 for i in range(nnx):
     for ifreq in range(nf):
         u[i, ifreq] = green[i, ifreq]*source[ifreq]
     for ifreq in range(1, nf):
         u[i, nt-ifreq] = np.conj(u[i, ifreq])
-for i in range(nnz):
-    for ifreq in range(nf):
-        uz[i, ifreq] = greenz[i, ifreq]*source[ifreq]
-    for ifreq in range(1, nf):
-        uz[i, nt-ifreq] = np.conj(uz[i, ifreq])
+# for i in range(nnz):
+#     for ifreq in range(nf):
+#         uz[i, ifreq] = greenz[i, ifreq]*source[ifreq]
+#     for ifreq in range(1, nf):
+#         uz[i, nt-ifreq] = np.conj(uz[i, ifreq])
 u = np.fft.ifft(u)/nt
-uz = np.fft.ifft(uz)/nt
+#uz = np.fft.ifft(uz)/nt
 for it in range(nt):
     u[:, it] = u[:,it]*np.exp(alpha*it*dt)
-    uz[:, it] = uz[:,it]*np.exp(alpha*it*dt)
+    #uz[:, it] = uz[:,it]*np.exp(alpha*it*dt)
 
-#plt.xlabel('time')
-#plt.ylabel('x_dist')
-#plt.title("2D Wave Equation FDM Modeling in F-S")
-plt.subplot(121)
-plt.imshow(np.real(u),cmap='binary')
-plt.subplot(122)
-plt.imshow(np.real(uz),cmap='binary')
+plt.xlabel('time')
+plt.ylabel('x_dist')
+plt.title("2D Wave Equation FDM Modeling in F-S")
+# plt.subplot(121)
+# plt.imshow(np.real(u),cmap='binary')
+# plt.subplot(122)
+# plt.imshow(np.real(uz),cmap='binary')
+# plt.show()
+plt.imshow(np.real(u), cmap='binary', aspect='auto', extent=[0, nx, 0, tmax])
+plt.colorbar()
 plt.show()
-#plt.imshow(np.real(u), cmap='binary', aspect='auto', extent=[0, nx, 0, tmax])
-#plt.colorbar()
-#plt.show()

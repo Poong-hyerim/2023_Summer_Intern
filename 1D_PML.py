@@ -37,7 +37,7 @@ def fdgaus(cutoff, dt, nt):
     # plt.show()
     return w
 
-delta = 20
+delta = 30
 v = 2
 dx = 0.01
 
